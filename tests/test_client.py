@@ -82,3 +82,18 @@ def test_invalid_json(monkeypatch):
     monkeypatch.setattr(requests, "post", Mock(return_value=response))
     with pytest.raises(RuntimeError, match="định dạng"):
         generate(settings(), "source")
+
+
+@pytest.mark.parametrize("provider,body", [
+    ("ollama", {"error": "private-secret", "message": {"content": "partial"}}),
+    ("openrouter", {"error": {"message": "private-secret"}, "choices": [{"message": {"content": "partial"}}]}),
+    ("openrouter", {"choices": [{"finish_reason": "error", "message": {"content": "partial"}}]}),
+    ("openrouter", {"choices": [{"error": "private-secret", "message": {"content": "partial"}}]}),
+])
+def test_http_200_error_rejects_partial_content(monkeypatch, provider, body):
+    response = Mock(status_code=200)
+    response.json.return_value = body
+    monkeypatch.setattr(requests, "post", Mock(return_value=response))
+    with pytest.raises(RuntimeError, match="báo lỗi") as exc:
+        generate(settings(provider), "source")
+    assert "private-secret" not in str(exc.value)

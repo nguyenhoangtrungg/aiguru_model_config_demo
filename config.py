@@ -1,11 +1,13 @@
 """Load one explicit env file, then let process variables take precedence."""
 import math
 import os
+from io import StringIO
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from dotenv import dotenv_values
+from dotenv.parser import parse_stream
 
 
 class ConfigError(ValueError):
@@ -24,10 +26,15 @@ class Settings:
 
 def load_settings(env_file: Path) -> Settings:
     # No interpolation: each value is literal. Do not mutate os.environ.
-    file_values = (
-        dotenv_values(env_file, interpolate=False)
-        if env_file.is_file() else {}
-    )
+    file_values = {}
+    if env_file.is_file():
+        text = env_file.read_text(encoding="utf-8")
+        for binding in parse_stream(StringIO(text)):
+            if binding.error:
+                raise ConfigError(
+                    f"File môi trường sai cú pháp tại dòng {binding.original.line}."
+                )
+        file_values = dotenv_values(stream=StringIO(text), interpolate=False)
     values = {**file_values, **os.environ}
 
     def required(name: str) -> str:

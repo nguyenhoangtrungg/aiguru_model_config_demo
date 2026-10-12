@@ -8,14 +8,14 @@ Quản lý cấu hình model bằng .env và config
 
 Đã thử trên Ubuntu 20.04.6, Bash, Python 3.12.9. Repository: [nguyenhoangtrungg/aiguru_model_config_demo](https://github.com/nguyenhoangtrungg/aiguru_model_config_demo).
 
-Với bản tài liệu hiện tại, dùng gói `aiguru_model_config_demo.zip` đi kèm để nhận đủ mã nguồn. Ngày 04/10/2026, remote vẫn ở bản khởi tạo chưa chứa ứng dụng. Sau khi bản code này được công bố, có thể lấy bằng:
+Tải mã nguồn bằng:
 
 ```bash
 git clone https://github.com/nguyenhoangtrungg/aiguru_model_config_demo.git
 cd aiguru_model_config_demo
 ```
 
-Nếu dùng ZIP, giải nén rồi mở thư mục `aiguru_model_config_demo`. Các lệnh bên dưới chạy ngay tại thư mục chứa `main.py`. Nếu chỉ thấy README và `.gitignore`, bạn đang dùng bản khởi tạo và cần quay lại gói ZIP. Dependency đã ghim yêu cầu Python từ 3.10, còn bản kiểm chứng dùng Python 3.12.9 được cài riêng. Kiểm tra `python3 --version` trước khi tạo venv:
+Nếu dùng ZIP, giải nén rồi mở thư mục `aiguru_model_config_demo`. Các lệnh bên dưới chạy ngay tại thư mục chứa `main.py`. Dependency đã ghim yêu cầu Python từ 3.10, còn bản kiểm chứng dùng Python 3.12.9 được cài riêng. Kiểm tra `python3 --version` trước khi tạo venv:
 
 ```bash
 python3 -m venv .venv
@@ -74,7 +74,7 @@ python main.py --env-file .env.cloud
 | `LLM_TIMEOUT` | Số hữu hạn >0, mặc định 60 |
 | `LLM_API_KEY` | Bắt buộc với OpenRouter. Không được ghi ra log |
 
-Biến shell > file > mặc định. Biến rỗng không được hiểu là “không tồn tại”. Không dùng `${OTHER_VAR}` trong file. Project giữ giá trị nguyên văn.
+Biến shell > file > mặc định. Biến rỗng không được hiểu là “không tồn tại”. Không dùng `${OTHER_VAR}` trong file. Project giữ giá trị nguyên văn. File sai cú pháp bị từ chối trước khi gọi API; thông báo chỉ ghi số dòng, không in giá trị cấu hình.
 
 ```bash
 LLM_TEMPERATURE=0.6 python main.py --env-file .env.local --check-config
@@ -84,7 +84,7 @@ python main.py --env-file profiles/missing-model.env.example
 echo $?
 ```
 
-Lệnh thiếu model phải kết thúc với mã 2 trước khi gọi model. Đọc mã thoát ngay sau lệnh Python. Mã 0 là hoàn tất hoặc check-config thành công, 1 là lỗi gọi model, 2 là lỗi cấu hình/dữ liệu/CLI. Timeout của Requests không phải tổng thời gian tối đa tuyệt đối của toàn tác vụ.
+Lệnh thiếu model phải kết thúc với mã 2 trước khi gọi model. Đọc mã thoát ngay sau lệnh Python. Mã 0 là hoàn tất hoặc check-config thành công, 1 là lỗi gọi model, 2 là lỗi cấu hình/dữ liệu/CLI. Response có trường `error` hoặc OpenRouter báo `finish_reason=error` bị từ chối kể cả khi có văn bản. Timeout của Requests không phải tổng thời gian tối đa tuyệt đối của toàn tác vụ.
 
 ## Kiểm thử
 
@@ -92,7 +92,7 @@ Lệnh thiếu model phải kết thúc với mã 2 trước khi gọi model. Đ
 python -m pytest -q
 ```
 
-56 test offline đã qua, không skip. Request trong test adapter là giả lập. Hai lần live được ghi nhận riêng trong bộ tài liệu bài #48, không được suy ra từ số test.
+Chạy bộ test offline để kiểm tra cấu hình và adapter. Request trong test adapter là giả lập. Hai lần live được ghi nhận riêng trong bộ tài liệu bài #48, không được suy ra từ số test.
 
 ## Đầu vào và đầu ra
 

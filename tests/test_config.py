@@ -115,3 +115,19 @@ def test_secret_not_in_error(env_file):
     with pytest.raises(ConfigError) as exc:
         load_settings(env_file(LLM_PROVIDER="openrouter", LLM_BASE_URL="https://openrouter.ai/api/v1", LLM_API_KEY="secret with spaces"))
     assert "secret with spaces" not in str(exc.value)
+
+
+@pytest.mark.parametrize("name", ["LLM_TEMPERATURE", "LLM_TIMEOUT", "LLM_API_KEY"])
+def test_malformed_env_rejected_without_leaking_values(env_file, name, monkeypatch):
+    path = env_file()
+    with path.open("a", encoding="utf-8") as stream:
+        stream.write(f'\n{name}="private-secret\n')
+    monkeypatch.setenv(name, "0.5")
+    with pytest.raises(ConfigError, match="sai cú pháp tại dòng") as exc:
+        load_settings(path)
+    assert "private-secret" not in str(exc.value)
+
+
+def test_valid_quoted_multiline_env(env_file):
+    settings = load_settings(env_file(LLM_MODEL='"quoted-model"', EXTRA='"first\nsecond"'))
+    assert settings.model == "quoted-model"

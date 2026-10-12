@@ -40,10 +40,17 @@ def generate(settings: Settings, prompt: str) -> str:
         )
     try:
         data = response.json()
+        if isinstance(data, dict) and "error" in data:
+            raise RuntimeError("Dịch vụ báo lỗi trong response; không nhận kết quả tóm tắt.")
         if settings.provider == "ollama":
             result = data["message"]["content"]
         else:
-            result = data["choices"][0]["message"]["content"]
+            choice = data["choices"][0]
+            if isinstance(choice, dict) and (
+                choice.get("finish_reason") == "error" or "error" in choice
+            ):
+                raise RuntimeError("Dịch vụ báo lỗi khi sinh văn bản; kết quả chưa hoàn tất.")
+            result = choice["message"]["content"]
     except (ValueError, KeyError, IndexError, TypeError):
         raise RuntimeError("Response không đúng định dạng adapter mong đợi.") from None
     if not isinstance(result, str) or not result.strip():
